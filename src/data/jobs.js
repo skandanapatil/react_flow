@@ -30,5 +30,30 @@ export const departments = [
       { id: 'j19', title: 'GPA Admin Assistant' },
       { id: 'j20', title: 'Hotel Utility' }
     ]
+  },
+
+  {
+    id: 'd3',
+    name: 'Administration',
+    jobs: [
+      { id: 'j21', title: 'Cruise Director' },
+      { id: 'j22', title: 'Hotel Manager' },
+      { id: 'j23', title: 'GM?' },
+      { id: 'j24', title: 'JMT Hotel Manager' },
+      { id: 'j25', title: 'Chief Purser' },
+      { id: 'j26', title: 'Hotel Accountant' },
+      { id: 'j27', title: 'First Purser' },
+      { id: 'j28', title: 'Junior First Purser' },
+      { id: 'j29', title: 'Trainee Administration HGA' },
+      { id: 'j30', title: 'Night Auditor' },
+      { id: 'j31', title: 'Assistant Provision Master' },
+      { id: 'j32', title: 'JMT Asst. Housekeeper' },
+      { id: 'j33', title: 'Ausflugsexperte' },
+      { id: 'j34', title: 'Aktiv-Ausflugsexperte' },
+      { id: 'j35', title: 'Shore Excursion Administrator' },
+      { id: 'j36', title: 'JMT Junior Service Supervisor' },
+      { id: 'j37', title: 'JMT Bar Supervisor' },
+      { id: 'j38', title: 'Hotel Administration Trainee' }
+    ]
   }
 ];
