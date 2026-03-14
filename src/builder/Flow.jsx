@@ -54,40 +54,17 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const { fitView } = useReactFlow();
 
-  // When a node is selected, dim everything except the node and its direct neighbors
+  // When a node is selected, dim everything except the node and its directly connected neighbors
   const highlightedNodeIds = React.useMemo(() => {
     if (!selectedNodeId) return new Set();
 
-    // Build quick lookup maps for traversing the graph
-    const outgoingMap = new Map();
-    const incomingMap = new Map();
+    const outgoing = edges
+      .filter((e) => e.source === selectedNodeId)
+      .map((e) => e.target);
 
-    edges.forEach((e) => {
-      outgoingMap.set(e.source, (outgoingMap.get(e.source) || []).concat(e.target));
-      incomingMap.set(e.target, (incomingMap.get(e.target) || []).concat(e.source));
-    });
-
-    const bfs = (start, map) => {
-      const visited = new Set();
-      const queue = [start];
-
-      while (queue.length) {
-        const node = queue.shift();
-        if (visited.has(node)) continue;
-        visited.add(node);
-        const neighbors = map.get(node) || [];
-        neighbors.forEach((n) => {
-          if (!visited.has(n)) queue.push(n);
-        });
-      }
-
-      return visited;
-    };
-
-    const outgoing = bfs(selectedNodeId, outgoingMap);
-
-    // Only show the immediate incoming node(s) for the selected node
-    const incoming = incomingMap.get(selectedNodeId) ?? [];
+    const incoming = edges
+      .filter((e) => e.target === selectedNodeId)
+      .map((e) => e.source);
 
     return new Set([selectedNodeId, ...outgoing, ...incoming]);
   }, [selectedNodeId, edges]);
@@ -109,17 +86,27 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
     if (!selectedNodeId) return edges;
 
     return edges.map((e) => {
-      const isHighlighted = highlightedNodeIds.has(e.source) && highlightedNodeIds.has(e.target);
+      const isOutgoing = e.source === selectedNodeId;
+      const isIncoming = e.target === selectedNodeId;
+      const isHighlighted = isOutgoing || isIncoming;
+
+      const strokeColor = isHighlighted
+        ? isOutgoing
+          ? 'green'
+          : 'red'
+        : e.style?.stroke;
+
       return {
         ...e,
         style: {
           ...e.style,
-          opacity: isHighlighted ? 1 : 0.25,
+          stroke: strokeColor,
+          opacity: isHighlighted ? 1 : 0,
           filter: isHighlighted ? 'none' : 'blur(2px)',
         },
       };
     });
-  }, [edges, selectedNodeId, highlightedNodeIds]);
+  }, [edges, selectedNodeId]);
 
   // This function now only runs when a user clicks a layout button
   const applyLayout = useCallback(
