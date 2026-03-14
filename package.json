@@ -13,7 +13,10 @@
     "@dagrejs/dagre": "^2.0.4",
     "@xyflow/react": "^12.10.1",
     "bootstrap": "^5.3.8",
+    "cytoscape": "^3.33.1",
     "dagre": "^0.8.5",
+    "elkjs": "^0.11.1",
+    "entitree-flex": "^0.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
