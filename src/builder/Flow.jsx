@@ -182,7 +182,6 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
           strokeWidth: isHighlighted ? 2.5 : 1,
           opacity:     isHighlighted ? 1 : 0.08,
         },
-        // ✅ animated for BOTH single mode and path mode
         animated: isHighlighted,
       };
     });
@@ -227,24 +226,32 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
   }, [jobToAdd, setNodes, setJobToAdd]);
 
   // ── connect ────────────────────────────────────────────────────────────
-  const onConnect = useCallback(
-    (params) => {
-      const sourceNode = nodes.find((n) => n.id === params.source);
-      const edgeColor  = getJobColor(sourceNode?.data?.label).border;
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...params,
-            type:  'floating',
-            style: { stroke: edgeColor, strokeWidth: 1.5 },
-          },
-          eds
-        )
-      );
-    },
-    [setEdges, nodes]
-  );
+const onConnect = useCallback(
+  (params) => {
+    // Determine the color based on the SOURCE node (where the drag starts)
+    const sourceNode = nodes.find((n) => n.id === params.source);
+    const edgeColor = getJobColor(sourceNode?.data?.label).border;
 
+    setEdges((eds) =>
+      addEdge(
+        {
+          ...params, // This spreads {source, target, sourceHandle, targetHandle}
+          type: 'floating',
+          // markerEnd ensures the arrow is at the TARGET (where you released the mouse)
+          markerEnd: { 
+            type: MarkerType.ArrowClosed, 
+            width: 20, 
+            height: 20, 
+            color: edgeColor 
+          },
+          style: { stroke: edgeColor, strokeWidth: 1.5 },
+        },
+        eds
+      )
+    );
+  },
+  [setEdges, nodes]
+);
   // ── save / restore ─────────────────────────────────────────────────────
   const handleSave = useCallback(() => {
     localStorage.setItem('graphData', JSON.stringify({ nodes, edges }));
@@ -368,11 +375,12 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        defaultEdgeOptions={{
-          type:      'floating',
-          markerEnd: { type: MarkerType.ArrowClosed },
-          style:     { stroke: '#555' },
-        }}
+       defaultEdgeOptions={{
+  type:        'floating',
+  markerEnd:   { type: MarkerType.ArrowClosed, width: 20, height: 20 }, 
+  markerStart: undefined, 
+  style:       { stroke: '#555', strokeWidth: 1.5 },
+}}
         connectionLineComponent={FloatingConnectionLine}
         fitView
       >
