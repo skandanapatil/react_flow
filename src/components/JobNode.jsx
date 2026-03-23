@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 
 export const DEPT_COLORS = {
@@ -26,6 +26,10 @@ export default function JobNode({ data }) {
   const [hover, setHover] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
 
+  useEffect(() => {
+    if (data.mode === 'single' || data.mode === 'path') setShowPopup(false);
+  }, [data.mode]);
+
   const dept = DEPT_COLORS[data.department] || DEPT_COLORS.Default;
   const roleColor = getJobColor(data.label);
 
@@ -38,7 +42,7 @@ export default function JobNode({ data }) {
   return (
     <div
       style={{
-        padding: '10px 15px 10px 20px', // Extra padding on left to make room for the handle surface
+        padding: '10px 15px 10px 20px',
         border: `${data.selected ? '2px' : '1.5px'} solid ${roleColor.border}`,
         borderRadius: '8px',
         background: dept.bg,
@@ -54,17 +58,17 @@ export default function JobNode({ data }) {
       }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      onClick={() => setShowPopup(!showPopup)}
+      onClick={() => {
+        if (data.mode === 'single' || data.mode === 'path') return;
+        setShowPopup(!showPopup);
+      }}
     >
-      {/* ON-SURFACE HANDLE 
-          Positioned exactly on the left border (surface) 
-      */}
       <Handle
         type="target"
         position={Position.Left}
         id="target"
         style={{
-          left: 0, // Sits exactly on the left surface
+          left: 0,
           background: roleColor.border,
           width: '10px',
           height: '10px',
@@ -78,14 +82,14 @@ export default function JobNode({ data }) {
         position={Position.Left}
         id="source"
         style={{
-          left: 0, // Overlaps target exactly
+          left: 0,
           background: roleColor.border,
           width: '10px',
           height: '10px',
           border: '2px solid white',
           borderRadius: '50%',
           zIndex: 12,
-          opacity: 0, // Only for interaction
+          opacity: 0,
         }}
       />
 
@@ -98,16 +102,15 @@ export default function JobNode({ data }) {
         {data.department}
       </div>
 
-      <div style={{ 
-        fontWeight: 700, 
-        fontSize: '12px', 
+      <div style={{
+        fontWeight: 700,
+        fontSize: '12px',
         color: roleColor.text,
-        pointerEvents: 'none'
+        pointerEvents: 'none',
       }}>
         {data.label}
       </div>
 
-      {/* Tooltip & Popup Logic */}
       {hover && !showPopup && (
         <div style={{
           position: 'absolute', top: -35, left: '50%', transform: 'translateX(-50%)',

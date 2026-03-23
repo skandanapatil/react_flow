@@ -85,19 +85,21 @@ export default function NodeModal({ onClose, onJobSelect }) {
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        height: '100%',
-        width: '300px',
-        background: '#fff',
-        borderRight: '1px solid #ccc',
-        padding: '20px',
-        zIndex: 1000,
-        overflowY: 'auto',
-        boxShadow: '2px 0 6px rgba(0,0,0,0.1)',
-      }}
+    style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    height: '100%',
+    width: '300px',
+    background: '#ffffff', // Force white background
+    color: '#333333',      // Explicitly set text color to dark grey/black
+    borderRight: '1px solid #ccc',
+    padding: '20px',
+    zIndex: 1000,
+    overflowY: 'auto',
+    boxShadow: '2px 0 6px rgba(0,0,0,0.1)',
+    fontFamily: 'sans-serif' // Ensures text rendering is consistent
+  }}
     >
       <button
         onClick={onClose}
@@ -108,7 +110,8 @@ export default function NodeModal({ onClose, onJobSelect }) {
           cursor: 'pointer',
           background: 'none',
           border: 'none',
-          fontSize: '20px'
+          fontSize: '20px',
+          color: '#333333' // Ensure close button is visible
         }}
       >
         ✕
@@ -120,7 +123,18 @@ export default function NodeModal({ onClose, onJobSelect }) {
         placeholder="Search..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        style={{ width: '100%', marginBottom: 10 }}
+        style={{ 
+          width: '100%', 
+          marginBottom: 10,
+          padding: '8px',
+          boxSizing: 'border-box',
+          // --- FIX STARTS HERE ---
+          color: '#000000',           // Text color while typing
+          backgroundColor: '#f9f9f9', // Light grey background
+          border: '1px solid #999',    // Visible border
+          borderRadius: '4px'
+          // --- FIX ENDS HERE ---
+        }}
       />
 
       <ul style={{ listStyle: 'none', padding: 0 }}>

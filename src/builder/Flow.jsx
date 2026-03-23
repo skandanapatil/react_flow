@@ -1,4 +1,3 @@
-// 
 
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
@@ -49,7 +48,6 @@ const btnBase = {
   transition: 'opacity .15s',
 };
 
-// ── shortest path (BFS) ────────────────────────────────────────────────────
 function getShortestPathStatic(startId, endId, edgesList) {
   if (!startId || !endId || startId === endId) return { nodeIds: [], edgeIds: [] };
 
@@ -78,18 +76,13 @@ function getShortestPathStatic(startId, endId, edgesList) {
   return { nodeIds: [], edgeIds: [] };
 }
 
-// ── main component ─────────────────────────────────────────────────────────
 const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [activeLayout, setActiveLayout]  = useState('vertical');
-  const [mode, setMode]                  = useState('normal'); // normal | single | path
-
-  // single-highlight mode
+  const [mode, setMode]                  = useState('normal'); 
   const [selectedEdgeId, setSelectedEdgeId] = useState(null);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
-
-  // path-finder mode
   const [pathStartNodeId, setPathStartNodeId] = useState(null);
   const [pathEndNodeId,   setPathEndNodeId]   = useState(null);
   const [pathStartInput,  setPathStartInput]  = useState('');
@@ -97,8 +90,6 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
   const [pathSubmitted,   setPathSubmitted]   = useState(false);
 
   const { fitView } = useReactFlow();
-
-  // ── jobs flat list ─────────────────────────────────────────────────────
   const allJobs = useMemo(() => {
     const result = [];
     departments.forEach((dept) =>
@@ -106,53 +97,90 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
     );
     return result;
   }, []);
-
-  // only jobs whose title matches a node currently in the graph
   const jobsInGraph = useMemo(
     () => allJobs.filter((job) => nodes.some((n) => n.data?.label === job.title)),
     [allJobs, nodes]
   );
-
-  // ── shortest path ──────────────────────────────────────────────────────
   const { nodeIds: pathNodeIds, edgeIds: pathEdgeIds } = useMemo(
     () => getShortestPathStatic(pathStartNodeId, pathEndNodeId, edges),
     [pathStartNodeId, pathEndNodeId, edges]
   );
-
-  // ── highlighted node set ───────────────────────────────────────────────
-  const highlightedNodeIds = useMemo(() => {
-    if (mode === 'path' && pathSubmitted && pathNodeIds.length) {
-      return new Set(pathNodeIds);
+  // const highlightedNodeIds = useMemo(() => {
+  //   if (mode === 'path' && pathSubmitted && pathNodeIds.length) {
+  //     return new Set(pathNodeIds);
+  //   }
+  //   if (mode === 'single' && selectedNodeId) {
+  //     const out = edges.filter((e) => e.source === selectedNodeId).map((e) => e.target);
+  //     const inc = edges.filter((e) => e.target === selectedNodeId).map((e) => e.source);
+  //     return new Set([selectedNodeId, ...out, ...inc]);
+  //   }
+  //   return new Set();
+  // }, [mode, pathSubmitted, pathNodeIds, selectedNodeId, edges]);
+ 
+ const { highlightedNodeIds, outgoingNodeIds, incomingNodeIds, outgoingEdgeIds, incomingEdgeIds } = useMemo(() => {
+  if (mode === 'path' && pathSubmitted && pathNodeIds.length) {
+    return {
+      highlightedNodeIds: new Set(pathNodeIds),
+      outgoingNodeIds: new Set(), incomingNodeIds: new Set(),
+      outgoingEdgeIds: new Set(), incomingEdgeIds: new Set(),
+    };
+  }
+  if (mode === 'single' && selectedNodeId) {
+    // Full outgoing trajectory via BFS
+    const outNodes = new Set();
+    const outEdges = new Set();
+    const queue = [selectedNodeId];
+    const visited = new Set([selectedNodeId]);
+    while (queue.length) {
+      const curr = queue.shift();
+      for (const e of edges) {
+        if (e.source === curr && !visited.has(e.target)) {
+          outNodes.add(e.target);
+          outEdges.add(e.id);
+          visited.add(e.target);
+          queue.push(e.target);
+        }
+      }
     }
-    if (mode === 'single' && selectedNodeId) {
-      const out = edges.filter((e) => e.source === selectedNodeId).map((e) => e.target);
-      const inc = edges.filter((e) => e.target === selectedNodeId).map((e) => e.source);
-      return new Set([selectedNodeId, ...out, ...inc]);
+    // Direct incoming only
+    const incNodes = new Set();
+    const incEdges = new Set();
+    for (const e of edges) {
+      if (e.target === selectedNodeId) {
+        incNodes.add(e.source);
+        incEdges.add(e.id);
+      }
     }
-    return new Set();
-  }, [mode, pathSubmitted, pathNodeIds, selectedNodeId, edges]);
-
-  // ── derived nodes ──────────────────────────────────────────────────────
+    return {
+      highlightedNodeIds: new Set([selectedNodeId, ...outNodes, ...incNodes]),
+      outgoingNodeIds: outNodes, incomingNodeIds: incNodes,
+      outgoingEdgeIds: outEdges, incomingEdgeIds: incEdges,
+    };
+  }
+  return {
+    highlightedNodeIds: new Set(),
+    outgoingNodeIds: new Set(), incomingNodeIds: new Set(),
+    outgoingEdgeIds: new Set(), incomingEdgeIds: new Set(),
+  };
+}, [mode, pathSubmitted, pathNodeIds, selectedNodeId, edges]);
   const nodesForRender = useMemo(() => {
-    if (mode === 'normal') return nodes;
-    if (mode === 'single' && !selectedNodeId) return nodes;
-    if (mode === 'path' && (!pathSubmitted || !pathStartNodeId || !pathEndNodeId)) return nodes;
+  if (mode === 'normal') 
+    return nodes.map((n) => ({ ...n, data: { ...n.data, mode } })); // ← was just `return nodes`
+  if (mode === 'single' && !selectedNodeId) 
+    return nodes.map((n) => ({ ...n, data: { ...n.data, mode } })); // ← was just `return nodes`
+  if (mode === 'path' && (!pathSubmitted || !pathStartNodeId || !pathEndNodeId)) 
+    return nodes.map((n) => ({ ...n, data: { ...n.data, mode } })); // ← was just `return nodes`
 
-    return nodes.map((n) => ({
-      ...n,
-      data: {
-        ...n.data,
-        selected: n.id === (mode === 'path' ? pathEndNodeId : selectedNodeId),
-        dimmed:   !highlightedNodeIds.has(n.id),
-      },
-    }));
-  }, [
-    nodes, mode, selectedNodeId,
-    pathSubmitted, pathStartNodeId, pathEndNodeId,
-    highlightedNodeIds,
-  ]);
-
-  // ── derived edges ──────────────────────────────────────────────────────
+  return nodes.map((n) => ({
+    ...n,
+    data: {
+      ...n.data,
+      selected: n.id === (mode === 'path' ? pathEndNodeId : selectedNodeId),
+      dimmed:   !highlightedNodeIds.has(n.id),
+      mode,  
+    },
+  }));
+}, [nodes, mode, selectedNodeId, pathSubmitted, pathStartNodeId, pathEndNodeId, highlightedNodeIds]);
   const edgesForRender = useMemo(() => {
     if (mode === 'normal') return edges;
     if (mode === 'single' && !selectedNodeId) return edges;
@@ -162,17 +190,17 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
 
     return edges.map((e) => {
       const isHighlighted =
-        mode === 'path'
-          ? pathEdgeSet.has(e.id)
-          : e.source === selectedNodeId || e.target === selectedNodeId;
+  mode === 'path'
+    ? pathEdgeSet.has(e.id)
+    : outgoingEdgeIds.has(e.id) || incomingEdgeIds.has(e.id);
 
-      const strokeColor = isHighlighted
-        ? mode === 'path'
-          ? '#22c55e'
-          : e.source === selectedNodeId
-          ? '#1D9E75'   // outgoing — green
-          : '#f59e0b'   // incoming — amber
-        : '#cbd5e1';    // dimmed   — light gray
+   const strokeColor = isHighlighted
+  ? mode === 'path'
+    ? '#22c55e'
+    : incomingEdgeIds.has(e.id)
+    ? '#f59e0b'   // orange for incoming
+    : '#1D9E75'   // teal for outgoing trajectory
+  : '#cbd5e1';
 
       return {
         ...e,
@@ -190,8 +218,6 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
     pathSubmitted, pathStartNodeId, pathEndNodeId,
     pathEdgeIds,
   ]);
-
-  // ── layout ─────────────────────────────────────────────────────────────
   const applyLayout = useCallback(
     async (layoutId, currentNodes, currentEdges) => {
       if (!currentNodes.length) return;
@@ -211,8 +237,6 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
     },
     [setNodes, setEdges, fitView]
   );
-
-  // ── add job node ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!jobToAdd) return;
     const newNode = {
@@ -225,19 +249,16 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
     setJobToAdd(null);
   }, [jobToAdd, setNodes, setJobToAdd]);
 
-  // ── connect ────────────────────────────────────────────────────────────
 const onConnect = useCallback(
   (params) => {
-    // Determine the color based on the SOURCE node (where the drag starts)
     const sourceNode = nodes.find((n) => n.id === params.source);
     const edgeColor = getJobColor(sourceNode?.data?.label).border;
 
     setEdges((eds) =>
       addEdge(
         {
-          ...params, // This spreads {source, target, sourceHandle, targetHandle}
+          ...params, 
           type: 'floating',
-          // markerEnd ensures the arrow is at the TARGET (where you released the mouse)
           markerEnd: { 
             type: MarkerType.ArrowClosed, 
             width: 20, 
@@ -252,7 +273,6 @@ const onConnect = useCallback(
   },
   [setEdges, nodes]
 );
-  // ── save / restore ─────────────────────────────────────────────────────
   const handleSave = useCallback(() => {
     localStorage.setItem('graphData', JSON.stringify({ nodes, edges }));
   }, [nodes, edges]);
@@ -266,11 +286,16 @@ const onConnect = useCallback(
     setTimeout(() => fitView({ duration: 400 }), 50);
   }, [setNodes, setEdges, fitView]);
 
-  // ── click handlers ─────────────────────────────────────────────────────
   const handleNodeClick = useCallback((_, node) => {
     if (mode === 'path') return;
+     if (mode === 'single') {
     setSelectedNodeId(node.id);
     setSelectedEdgeId(null);
+    return;  
+  }
+    setSelectedNodeId(node.id);
+    setSelectedEdgeId(null);
+      setModalNode(node); 
   }, [mode]);
 
   const handleEdgeClick = useCallback((_, edge) => {
@@ -278,7 +303,6 @@ const onConnect = useCallback(
     setSelectedNodeId(null);
   }, []);
 
-  // ── clear mode ─────────────────────────────────────────────────────────
   const clearMode = useCallback(() => {
     setMode('normal');
     setSelectedNodeId(null);
@@ -296,7 +320,6 @@ const onConnect = useCallback(
     setSelectedEdgeId(null);
   }, [mode, clearMode]);
 
-  // ── delete ─────────────────────────────────────────────────────────────
   const handleDeleteSelectedEdge = useCallback(() => {
     if (!selectedEdgeId) return;
     setEdges((eds) => eds.filter((e) => e.id !== selectedEdgeId));
@@ -313,7 +336,6 @@ const onConnect = useCallback(
     setSelectedEdgeId(null);
   }, [selectedNodeId, setNodes, setEdges]);
 
-  // ── keyboard shortcuts ─────────────────────────────────────────────────
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === 'Escape') { clearMode(); return; }
@@ -327,7 +349,6 @@ const onConnect = useCallback(
   }, [clearMode, handleDeleteSelectedEdge, handleDeleteSelectedNode,
       selectedEdgeId, selectedNodeId]);
 
-  // ── path input handlers ────────────────────────────────────────────────
   const handleStartInput = useCallback((e) => {
     const title = e.target.value;
     setPathStartInput(title);
@@ -344,7 +365,6 @@ const onConnect = useCallback(
     setPathEndNodeId(node?.id ?? null);
   }, [nodes]);
 
-  // ── path submit ────────────────────────────────────────────────────────
   const handlePathSubmit = useCallback(() => {
     if (!pathStartNodeId || !pathEndNodeId || pathStartNodeId === pathEndNodeId) {
       setPathSubmitted(false);
@@ -353,7 +373,6 @@ const onConnect = useCallback(
     setPathSubmitted(true);
   }, [pathStartNodeId, pathEndNodeId]);
 
-  // ── path error message ─────────────────────────────────────────────────
   const pathError = useMemo(() => {
     if (!pathSubmitted) return null;
     if (!pathStartNodeId || !pathEndNodeId) return 'One or both roles are not in the graph.';
@@ -361,10 +380,10 @@ const onConnect = useCallback(
     return null;
   }, [pathSubmitted, pathStartNodeId, pathEndNodeId, pathNodeIds]);
 
-  // ── render ─────────────────────────────────────────────────────────────
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <ReactFlow
+      style={{ backgroundColor: '#ffffff' }}
         nodes={nodesForRender}
         edges={edgesForRender}
         onNodesChange={onNodesChange}
@@ -400,13 +419,11 @@ const onConnect = useCallback(
             minWidth:      '160px',
           }}
         >
-          {/* save / restore */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
             <button onClick={handleSave}    style={{ ...btnBase, background: '#64748B' }}>Save</button>
             <button onClick={handleRestore} style={{ ...btnBase, background: '#64748B' }}>Restore</button>
           </div>
 
-          {/* delete selected node or edge */}
           {(selectedEdgeId || selectedNodeId) && (
             <button
               onClick={selectedEdgeId ? handleDeleteSelectedEdge : handleDeleteSelectedNode}
@@ -418,7 +435,6 @@ const onConnect = useCallback(
 
           <div style={{ borderTop: '1px solid #E2E8F0', margin: '2px 0' }} />
 
-          {/* layout buttons */}
           {LAYOUTS.map((l) => (
             <button
               key={l.id}
@@ -441,7 +457,6 @@ const onConnect = useCallback(
 
           <div style={{ borderTop: '1px solid #E2E8F0', margin: '2px 0' }} />
 
-          {/* single highlight mode */}
           <button
             onClick={() => {
               setMode('single');
@@ -465,8 +480,6 @@ const onConnect = useCallback(
               Click a node to highlight its connections.
             </div>
           )}
-
-          {/* path finder mode */}
           <button
             onClick={() => {
               setMode('path');
@@ -490,7 +503,6 @@ const onConnect = useCallback(
           {mode === 'path' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '4px' }}>
 
-              {/* start role */}
               <input
                 list="startJobs"
                 value={pathStartInput}
@@ -509,8 +521,6 @@ const onConnect = useCallback(
                   <option key={job.id} value={job.title} />
                 ))}
               </datalist>
-
-              {/* end role */}
               <input
                 list="endJobs"
                 value={pathEndInput}
@@ -529,8 +539,6 @@ const onConnect = useCallback(
                   <option key={job.id} value={job.title} />
                 ))}
               </datalist>
-
-              {/* find path button */}
               <button
                 onClick={handlePathSubmit}
                 disabled={
@@ -551,8 +559,6 @@ const onConnect = useCallback(
               >
                 Find path
               </button>
-
-              {/* success */}
               {pathSubmitted && !pathError && pathNodeIds.length > 0 && (
                 <div style={{
                   fontSize:     11,
@@ -564,8 +570,6 @@ const onConnect = useCallback(
                   Path found — {pathNodeIds.length} roles, {pathEdgeIds.length} steps
                 </div>
               )}
-
-              {/* error */}
               {pathError && (
                 <div style={{
                   fontSize:     11,
@@ -581,8 +585,6 @@ const onConnect = useCallback(
           )}
 
           <div style={{ borderTop: '1px solid #E2E8F0', margin: '2px 0' }} />
-
-          {/* clear */}
           <button
             onClick={clearMode}
             style={{
