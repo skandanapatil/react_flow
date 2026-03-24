@@ -75,6 +75,7 @@ export const departments = [
       { id: "j40", title: "Jr Mgmnt Trainee Bordreiseleitung" },
       { id: "j41", title: "Reiseberater" },
       { id: "j42", title: "JMT Cruise Consultant" },
+      { id: "j234", title: "JMT Reise Manager" },
     ],
   },
   {

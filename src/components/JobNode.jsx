@@ -2,10 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { Handle, Position } from '@xyflow/react';
 
 export const DEPT_COLORS = {
-  'Gästeservice':   { bg: '#EFF6FF', border: '#3B82F6', text: '#1D4ED8' },
-  'Hotel Support': { bg: '#F0FDF4', border: '#10B981', text: '#065F46' },
-  'Administration':{ bg: '#FDF4FF', border: '#A855F7', text: '#6B21A8' },
-  'Default':       { bg: '#F8FAFC', border: '#94A3B8', text: '#475569' },
+ 'Administration':  { bg: '#FDF4FF', border: '#A855F7', text: '#6B21A8' },
+  'IT':              { bg: '#BFDBFE', border: '#3B82F6', text: '#1D4ED8' },
+  'Gäste Service':   { bg: '#EFF6FF', border: '#10B981', text: '#065F46' },
+  'Printshop':       { bg: '#FED7AA', border: '#F97316', text: '#9A3412' },
+  'HR':              { bg: '#FECDD3', border: '#F43F5E', text: '#9F1239' },
+  'Reiseleitung':    { bg: '#99F6E4', border: '#14B8A6', text: '#0F766E' },
+  'Galley':          { bg: '#FDE68A', border: '#F59E0B', text: '#92400E' },
+  'Hotel Support':   { bg: '#F0FDF4', border: '#22C55E', text: '#166534' },
+  'Service FB':      { bg: '#FCD34D', border: '#D97706', text: '#78350F' },
+  'Provision':       { bg: '#6EE7B7', border: '#059669', text: '#064E3B' },
+  'House Keeping':   { bg: '#C7D2FE', border: '#6366F1', text: '#3730A3' },
+  'Family & Arts':   { bg: '#FBCFE8', border: '#EC4899', text: '#9D174D' },
+  'ShoreEx':         { bg: '#7DD3FC', border: '#0EA5E9', text: '#0C4A6E' },
+  'SPA & Sport':     { bg: '#DDD6FE', border: '#8B5CF6', text: '#4C1D95' },
+  'Entertainment':   { bg: '#FEF08A', border: '#EAB308', text: '#713F12' },
+  'Concessionaires': { bg: '#FECACA', border: '#F87171', text: '#991B1B' },
+  'Default':         { bg: '#E2E8F0', border: '#94A3B8', text: '#475569' },
 };
 
 export const getJobColor = (label = '') => {
