@@ -1,4 +1,3 @@
-// src/components/NodeTooltip.jsx
 import React, { useState } from 'react';
 
 export default function NodeTooltip({ data }) {
