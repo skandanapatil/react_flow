@@ -24,7 +24,7 @@ import {
 import FloatingEdge from '../components/FloatingEdge';
 import FloatingConnectionLine from '../components/FloatingConnectionLine';
 import { getJobColor } from '../components/JobNode';
-import { departments } from '../data/jobs';
+import { superDepartments } from '../data/jobs';
 
 const nodeTypes = { job: JobNode };
 const edgeTypes = { floating: FloatingEdge };
@@ -88,15 +88,58 @@ const LayoutFlow = ({ jobToAdd, setJobToAdd }) => {
   const [pathStartInput,  setPathStartInput]  = useState('');
   const [pathEndInput,    setPathEndInput]    = useState('');
   const [pathSubmitted,   setPathSubmitted]   = useState(false);
+    const [confirmVisible, setConfirmVisible] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmAction, setConfirmAction] = useState(() => () => {});
+
+ const requestDeleteEdge = useCallback((edgeId) => {
+    const edge = edges.find((ed) => ed.id === edgeId);
+    if (!edge) return;
+      const sourceNode = nodes.find((n) => n.id === edge.source);
+  const targetNode = nodes.find((n) => n.id === edge.target);
+  const sourceName = sourceNode?.data?.label ?? edge.source;
+  const targetName = targetNode?.data?.label ?? edge.target;
+    setConfirmMessage(`Are you sure you want to delete the connection between "${sourceName}" and "${targetName}"?`);
+    setConfirmAction(() => () => {
+      setEdges((eds) => eds.filter((e) => e.id !== edgeId));
+      setSelectedEdgeId(null);
+      setConfirmVisible(false);
+    });
+    setConfirmVisible(true);
+  }, [edges]);
+
+  const requestDeleteNode = useCallback((nodeId) => {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+    setConfirmMessage(`Are you sure you want to delete the node "${node.data.label}" and all its connections?`);
+    setConfirmAction(() => () => {
+      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+      setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+      setSelectedNodeId(null);
+      setSelectedEdgeId(null);
+      setConfirmVisible(false);
+    });
+    setConfirmVisible(true);
+  }, [nodes, edges]);
 
   const { fitView } = useReactFlow();
-  const allJobs = useMemo(() => {
-    const result = [];
-    departments.forEach((dept) =>
-      dept.jobs.forEach((job) => result.push({ ...job, department: dept.name }))
-    );
-    return result;
-  }, []);
+const allJobs = useMemo(() => {
+  const result = [];
+
+  superDepartments.forEach((superDept) => {
+    superDept.departments.forEach((dept) => {
+      dept.jobs.forEach((job) => {
+        result.push({
+          ...job,                     // keep job properties like id, title
+          department: dept.name,       // the immediate department
+          superDepartment: superDept.name, // optional: add super department
+        });
+      });
+    });
+  });
+
+  return result;
+}, [superDepartments]);
   const jobsInGraph = useMemo(
     () => allJobs.filter((job) => nodes.some((n) => n.data?.label === job.title)),
     [allJobs, nodes]
@@ -295,13 +338,57 @@ const onConnect = useCallback(
   }
     setSelectedNodeId(node.id);
     setSelectedEdgeId(null);
-      setModalNode(node); 
+    console.log(node.id)
   }, [mode]);
 
   const handleEdgeClick = useCallback((_, edge) => {
     setSelectedEdgeId(edge.id);
+    console.log(edge.id)
     setSelectedNodeId(null);
   }, []);
+
+  const ConfirmModal = ({ visible, message, onConfirm, onCancel }) => {
+  if (!visible) return null;
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      backgroundColor: 'rgba(0,0,0,0.4)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 9999,
+    }}>
+      <div style={{
+        backgroundColor: '#fff',
+        padding: '20px',
+        borderRadius: '10px',
+        minWidth: '280px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+        textAlign: 'center',
+        animation: 'fadeIn 0.2s',
+      }}>
+        <div style={{ marginBottom: '16px', fontSize: '14px', color: '#111' }}>
+          {message}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+          <button
+            onClick={onConfirm}
+            style={{ ...btnBase, backgroundColor: '#DC2626', width: '100px' }}
+          >
+            Yes
+          </button>
+          <button
+            onClick={onCancel}
+            style={{ ...btnBase, backgroundColor: '#64748B', width: '100px' }}
+          >
+            No
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
   const clearMode = useCallback(() => {
     setMode('normal');
@@ -322,16 +409,18 @@ const onConnect = useCallback(
 
   const handleDeleteSelectedEdge = useCallback(() => {
     if (!selectedEdgeId) return;
-    setEdges((eds) => eds.filter((e) => e.id !== selectedEdgeId));
-    setSelectedEdgeId(null);
+    // setEdges((eds) => eds.filter((e) => e.id !== selectedEdgeId));
+    // setSelectedEdgeId(null);
+     requestDeleteEdge(selectedEdgeId);
   }, [selectedEdgeId, setEdges]);
 
   const handleDeleteSelectedNode = useCallback(() => {
     if (!selectedNodeId) return;
-    setNodes((nds) => nds.filter((n) => n.id !== selectedNodeId));
-    setEdges((eds) =>
-      eds.filter((e) => e.source !== selectedNodeId && e.target !== selectedNodeId)
-    );
+    // setNodes((nds) => nds.filter((n) => n.id !== selectedNodeId));
+    // setEdges((eds) =>
+    //   eds.filter((e) => e.source !== selectedNodeId && e.target !== selectedNodeId)
+    // );
+ requestDeleteNode(selectedNodeId);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
   }, [selectedNodeId, setNodes, setEdges]);
@@ -382,6 +471,12 @@ const onConnect = useCallback(
 
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
+         <ConfirmModal
+      visible={confirmVisible}
+      message={confirmMessage}
+      onConfirm={confirmAction}
+      onCancel={() => setConfirmVisible(false)}
+    />
       <ReactFlow
       style={{ backgroundColor: '#ffffff' }}
         nodes={nodesForRender}

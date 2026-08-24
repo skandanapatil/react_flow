@@ -1,5 +1,8 @@
-export const departments = [
+export const superDepartments = [
   {
+   id:"sd1",
+   name:"Mein Schiff", 
+    departments:[ {
     id: "d1",
     name: "Administration",
     jobs: [
@@ -328,6 +331,6 @@ export const departments = [
       { id: "j232", title: "Photographer" },
       { id: "j233", title: "Video Operator" },
     ],
-  },
+  },]}
 ];
 
