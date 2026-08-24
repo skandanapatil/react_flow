@@ -11,8 +11,8 @@ export default function App() {
       <button
         onClick={() => setShowModal(true)}
         style={{
-          color: '#333333', // Ensure button text is visible
-          background: '#f9f9f9', // A blue background for better visibility
+          color: '#333333',
+          background: '#f9f9f9',
           border: 'none',
           position: 'absolute', top: 10, left: 10, zIndex: 10 
         }}

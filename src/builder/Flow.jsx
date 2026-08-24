@@ -169,7 +169,7 @@ const allJobs = useMemo(() => {
     };
   }
   if (mode === 'single' && selectedNodeId) {
-    // Full outgoing trajectory via BFS
+
     const outNodes = new Set();
     const outEdges = new Set();
     const queue = [selectedNodeId];
@@ -185,7 +185,6 @@ const allJobs = useMemo(() => {
         }
       }
     }
-    // Direct incoming only
     const incNodes = new Set();
     const incEdges = new Set();
     for (const e of edges) {

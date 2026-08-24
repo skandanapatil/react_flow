@@ -1,4 +1,3 @@
-// src/components/EdgeTooltip.jsx
 import React, { useState } from 'react';
 
 export default function EdgeTooltip({ source, target }) {

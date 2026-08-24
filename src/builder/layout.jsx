@@ -3,7 +3,7 @@ import ELK from 'elkjs/lib/elk.bundled.js';
 
 export const elk = new ELK();
 
-// ── Dagre ──────────────────────────────────────────────────────────────────
+//Dagre 
 export const getDagreLayout = (nodes, edges, direction = 'TB') => {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
   const isHorizontal = direction === 'LR';
@@ -31,7 +31,7 @@ export const getDagreLayout = (nodes, edges, direction = 'TB') => {
   };
 };
 
-// ── Shared ELK helper ──────────────────────────────────────────────────────
+//Shared ELK helper 
 const runELK = async (nodes, edges, layoutOptions, sourcePosition = 'right', targetPosition = 'left', edgeType = 'smoothstep') => {
   const cleanNodes = nodes.filter((n, i, self) => i === self.findIndex((x) => x.id === n.id));
   const cleanEdges = edges.filter((e) => e.source !== e.target);
@@ -58,7 +58,7 @@ const runELK = async (nodes, edges, layoutOptions, sourcePosition = 'right', tar
   };
 };
 
-// ── Orthogonal ─────────────────────────────────────────────────────────────
+//Orthogonal 
 export const getOrthogonalLayout = (nodes, edges) =>
   runELK(nodes, edges, {
     'elk.algorithm': 'layered',
@@ -70,7 +70,7 @@ export const getOrthogonalLayout = (nodes, edges) =>
     'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
   }, 'right', 'left', 'step');
 
-// ── Tree ───────────────────────────────────────────────────────────────────
+// Tree
 export const getTreeLayout = (nodes, edges) =>
   runELK(nodes, edges, {
     'elk.algorithm': 'mrtree',
@@ -79,7 +79,7 @@ export const getTreeLayout = (nodes, edges) =>
     'elk.layered.spacing.nodeNodeBetweenLayers': '80',
   }, 'bottom', 'top', 'smoothstep');
 
-// ── Radial ─────────────────────────────────────────────────────────────────
+// Radial 
 export const getRadialLayout = (nodes, edges) =>
   runELK(nodes, edges, {
     'elk.algorithm': 'radial',
@@ -88,7 +88,7 @@ export const getRadialLayout = (nodes, edges) =>
     'elk.radial.compactor': 'NONE',
   }, 'right', 'left', 'straight');
 
-// ── Nets (Force) ───────────────────────────────────────────────────────────
+// Nets (Force)
 export const getNetsLayout = (nodes, edges) =>
   runELK(nodes, edges, {
     'elk.algorithm': 'force',
