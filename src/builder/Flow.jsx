@@ -23,7 +23,7 @@ import {
 } from './layout';
 import FloatingEdge from '../components/FloatingEdge';
 import FloatingConnectionLine from '../components/FloatingConnectionLine';
-import { getJobColor } from '../components/JobNode';
+import {DEPT_COLORS, getJobColor } from '../components/JobNode';
 import { superDepartments } from '../data/jobs';
 
 const nodeTypes = { job: JobNode };
@@ -295,20 +295,27 @@ const allJobs = useMemo(() => {
 const onConnect = useCallback(
   (params) => {
     const sourceNode = nodes.find((n) => n.id === params.source);
-    const edgeColor = getJobColor(sourceNode?.data?.label).border;
+
+    const deptColor =
+      DEPT_COLORS[sourceNode?.data?.department]?.border || '#999';
 
     setEdges((eds) =>
       addEdge(
         {
-          ...params, 
+          ...params,
           type: 'floating',
-          markerEnd: { 
-            type: MarkerType.ArrowClosed, 
-            width: 20, 
-            height: 20, 
-            color: edgeColor 
+
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 20,
+            height: 20,
+            color: deptColor,
           },
-          style: { stroke: edgeColor, strokeWidth: 1.5 },
+
+          style: {
+            stroke: deptColor,
+            strokeWidth: 1.5,
+          },
         },
         eds
       )
