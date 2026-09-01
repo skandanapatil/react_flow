@@ -18,7 +18,9 @@ export default function FloatingEdge({ id, source, target, markerEnd, style }) {
       className="react-flow__edge-path"
       d={edgePath}
       markerEnd={markerEnd}
-        style={{ ...style,cursor: 'pointer', pointerEvents: 'stroke',strokeWidth: 2  }}
+        style={{ ...style,cursor: 'pointer', pointerEvents: 'stroke',strokeWidth: 2  }
+      }
+       fill="none"
     />
   );
 }

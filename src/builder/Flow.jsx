@@ -11,7 +11,10 @@ import {
   Controls,
   useReactFlow,
   MarkerType,
+  getNodesBounds,
+  getViewportForBounds,
 } from '@xyflow/react';
+import { toPng } from 'html-to-image';
 import JobNode from '../components/JobNode';
 import '@xyflow/react/dist/style.css';
 import {
@@ -50,16 +53,17 @@ const btnBase = {
 
 function getShortestPathStatic(startId, endId, edgesList) {
   if (!startId || !endId || startId === endId) return { nodeIds: [], edgeIds: [] };
-
+console.log(edgesList,"list of edges")
   const adjacency = new Map();
   edgesList.forEach((e) => {
     if (!adjacency.has(e.source)) adjacency.set(e.source, []);
     adjacency.get(e.source).push({ target: e.target, edgeId: e.id });
   });
-
+console.log(adjacency,"adjacency added here")
   const queue   = [{ nodeId: startId, path: [], edgePath: [] }];
   const visited = new Set([startId]);
-
+console.log( queue,"queue added here")
+console.log( visited,"visited added here")
   while (queue.length) {
     const { nodeId, path, edgePath } = queue.shift();
     for (const { target, edgeId } of (adjacency.get(nodeId) || [])) {
@@ -73,6 +77,7 @@ function getShortestPathStatic(startId, endId, edgesList) {
       queue.push({ nodeId: target, path: nextPath, edgePath: nextEdgePath });
     }
   }
+  console.log(nodeIds,edgeIds,"node and edge id here")
   return { nodeIds: [], edgeIds: [] };
 }
 
@@ -260,6 +265,37 @@ const allJobs = useMemo(() => {
     pathSubmitted, pathStartNodeId, pathEndNodeId,
     pathEdgeIds,
   ]);
+  const handleDownloadImage = useCallback(() => {
+  if (!nodes.length) return;
+
+  const imageWidth  = 1920;
+  const imageHeight = 1080;
+
+  const nodesBounds = getNodesBounds(nodes);
+  const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, 0.1);
+
+  const viewportEl = document.querySelector('.react-flow__viewport');
+  if (!viewportEl) return;
+
+  toPng(viewportEl, {
+    backgroundColor: '#ffffff',
+    width:  imageWidth,
+    height: imageHeight,
+    filter: (node) =>
+      !node?.classList?.contains('react-flow__panel') &&
+      !node?.classList?.contains('react-flow__controls'),
+    style: {
+      width:     imageWidth,
+      height:    imageHeight,
+      transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+    },
+  }).then((dataUrl) => {
+    const a = document.createElement('a');
+    a.setAttribute('download', 'org-chart.png');
+    a.setAttribute('href', dataUrl);
+    a.click();
+  });
+}, [nodes]);
   const applyLayout = useCallback(
     async (layoutId, currentNodes, currentEdges) => {
       if (!currentNodes.length) return;
@@ -524,7 +560,9 @@ const onConnect = useCallback(
             <button onClick={handleSave}    style={{ ...btnBase, background: '#64748B' }}>Save</button>
             <button onClick={handleRestore} style={{ ...btnBase, background: '#64748B' }}>Restore</button>
           </div>
-
+<button onClick={handleDownloadImage} style={{ ...btnBase, background: '#0EA5E9' }}>
+  Download Image
+</button>
           {(selectedEdgeId || selectedNodeId) && (
             <button
               onClick={selectedEdgeId ? handleDeleteSelectedEdge : handleDeleteSelectedNode}
